@@ -32,12 +32,12 @@ dialSequnce (c:cs) state zeroCount =
 -- =============================================================
 dialXCountZero :: Command -> Int -> Int -> (Int, Int)
 dialXCountZero (L, n) state count
-  | d < n = dialXCountZero (L, n - d) 0 (count + 1)
+  | n > d = dialXCountZero (L, n - d) 0 (count + 1)
   | otherwise = (d - n, count)
   where d = if state == 0 then 100 else state
   
 dialXCountZero (R, n) state count
-  | d < n = dialXCountZero (R, n - d) 0 (count + 1)
+  | n > d = dialXCountZero (R, n - d) 0 (count + 1)
   | otherwise = ((state + n) `mod` 100, count)
   where d = 100 - state
   
