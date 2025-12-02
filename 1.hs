@@ -49,6 +49,31 @@ dialSequnce2 (c:cs) state zeroCount =
     _ -> dialSequnce2 cs s (zeroCount + count)
   where (s, count) = (dialXCountZero c state 0) 
 
+-- =============================================================
+--                      Part II non-recursion
+-- =============================================================
+dialXCountZero2 :: Command -> Int -> (Int, Int)
+dialXCountZero2 (L, n) state
+  | state == 0 = (r, q - 1)
+  | otherwise = (r, q)
+  where r = (state - n) `mod` 100
+        q = abs ((state - n) `div` 100)
+
+dialXCountZero2 (R, n) state
+  | (state + n) == 100 = (r, q - 1)
+  | otherwise = (r, q)
+  where r = (state + n) `mod` 100
+        q = abs ((state + n) `div` 100)
+  
+dialSequnce3 :: [Command] -> Int -> Int -> Int
+dialSequnce3 [] state zeroCount = zeroCount
+dialSequnce3 (c:cs) state zeroCount =
+  case s of
+    0 -> dialSequnce2 cs s (zeroCount + count + 1)
+    _ -> dialSequnce2 cs s (zeroCount + count)
+  where (s, count) = (dialXCountZero2 c state)
+
+  
 main :: IO ()
 main = do
   print "day 1"
@@ -56,6 +81,5 @@ main = do
   input <- readFile "1.input"
   let cmds = parseInput input 
   print $ dialSequnce cmds 50 0
-
-  let cmds = parseInput input
   print $ dialSequnce2 cmds 50 0
+  print $ dialSequnce3 cmds 50 0
