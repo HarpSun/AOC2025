@@ -36,7 +36,7 @@ readOp :: Text -> Op
 readOp "*" = Mul
 readOp "+" = Add
 
--- parseInput :: Text -> [Node]
+parseInput :: Text -> [Node]
 parseInput input =
   [App (readOp $ last e)
    [text2Int i | i <- (init e)]
