@@ -55,22 +55,33 @@ pressButton lights button =
         toggle '.' = '#'
         toggle '#' = '.'
 
-configureMachine :: [Char] -> [Button] -> [Char] -> [Button]
-configureMachine lights buttons target
-  | lights == target = []
-  | otherwise =
-      let lights' = fmap (pressButton lights) buttons
-          solutions = [b : (configureMachine l (delete b buttons) target) | (l, b) <- zip lights' buttons]
-      in shortestSolution solutions
+type Memo = [((String, [Button]), [Button])]
+
+configureMachine :: String -> String -> [Button] -> M.State Memo [Button]
+configureMachine target lights buttons
+  | lights == target = return []
+  | otherwise = do
+      let k = (lights, buttons)
+      memo <- get
+      case lookup k memo of
+        Just a -> return a
+        Nothing -> do
+          let lights' = fmap (pressButton lights) buttons
+          solutions <- mapM (uncurry $ configureMachine target)
+                       [(l, delete b buttons) | (l, b) <- zip lights' buttons]
+          let res = shortestSolution [(b:s) | (s, b) <- zip solutions buttons]
+          modify' ((k, res):)
+          return res
 
 shortestSolution :: [[Button]] -> [Button]
 shortestSolution [] = []
 shortestSolution solutions = head sortedSolution
   where sortedSolution = sortBy (\x1 x2 -> compare (length x1) (length x2)) solutions
 
-sumShortestSolution :: [([Char], [Button])] -> Int
-sumShortestSolution machines = 
-  sum $ fmap length [configureMachine (initLight light) buttons light | (light, buttons) <- machines]
+sumShortestSolution :: [([Char], [Button], [Int])] -> Int
+sumShortestSolution machines = sum $ fmap length solutions
+  where solutions = [ let (res, state) = runState (configureMachine light (initLight light) buttons) [] in res
+                    | (light, buttons, _) <- machines]
 
 main :: IO ()
 main = do
