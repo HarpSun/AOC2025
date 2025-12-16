@@ -83,6 +83,43 @@ sumShortestSolution machines = sum $ fmap length solutions
   where solutions = [ let (res, state) = runState (configureMachine light (initLight light) buttons) [] in res
                     | (light, buttons, _) <- machines]
 
+-- =============================================================
+--                      Part II
+--   work for example input but too slow for real input
+--                 ended up using z3...
+-- =============================================================
+initJoltage :: [Char] -> [Int]
+initJoltage light = take (length light) (repeat 0)
+  
+pressButton2 :: [Int] -> [Int] -> [Int]
+pressButton2 joltage button =
+  [if i `elem` button then j + 1 else j | (i, j) <- zip (iterate (+1) 0) joltage]
+
+
+type Memo2 = [([Int], Maybe [Button])]
+
+configureMachine2 :: [Int] -> [Button] -> [Int] -> M.State Memo2 (Maybe [Button])
+configureMachine2 target buttons joltage
+  | joltage == target = return $ Just []
+  | any id [ v1 > v2 | (v1, v2) <- zip joltage target] = return Nothing
+  | otherwise = do
+      let k = joltage
+      memo <- get
+      case lookup k memo of
+        Just a -> return $ a
+        Nothing -> do
+          let joltage' = fmap (pressButton2 joltage) buttons
+          solutions <- mapM (configureMachine2 target buttons) joltage'
+          let solution = shortestSolution [let Just s' = s in (b:s') | (s, b) <- zip solutions buttons, s /= Nothing]
+          let res = if solution == [] then Nothing else Just solution
+          modify' ((k, res):)
+          return res
+
+sumShortestSolution2 :: [([Char], [Button], [Int])] -> Int
+sumShortestSolution2 machines = sum $ fmap length [let Just s' = s in s' | s <- solutions, s /= Nothing]
+  where solutions = [ let (res, state) = runState (configureMachine2 joltage buttons (initJoltage light)) [] in res
+                    | (light, buttons, joltage) <- machines]
+                    
 main :: IO ()
 main = do
   print "day 10"
